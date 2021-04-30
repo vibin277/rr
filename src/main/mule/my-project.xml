@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="da522d63-7f20-4bfa-b9c5-734a34bd99cb" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="ca0365e2-a204-4f46-a39f-a1e996158e3c" environment="dev" applicationName="my-project" applicationVersion="v2.0.1"/>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="78a520cf-1f9c-4828-9a25-c82eaacb6872" >
+		<db:my-sql-connection host="64.227.37.97" port="3306" user="njclabs" password="training" database="nrs" />
+	</db:config>
+	<flow name="user-insertion-flow" doc:id="1fdfc164-4145-4df4-b8a5-6d108e28829b" >
+		<json-logger:logger doc:name="Logger" doc:id="33355695-1c50-4d3b-982a-8eefb6fef550" config-ref="JSON_Logger_Config" message="payload at the begining of flow"/>
+		<db:insert doc:name="user-insertion" doc:id="705b08dd-39cc-49dd-8330-674299c869ef" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO USER(USER_ID,FIRST_NAME,STATUS_TYPE_ID,LAST_NAME,EMAIL_ID,PHONE_NUMBER) VALUES (:id,:firstname,:statustype,:lastname,:email,:phone)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{	
+	id: payload.userID,
+	firstname: payload.firstname,
+	lastname: payload.lastname,
+	email: payload.email, 
+	phone: payload.phone,
+	statustype: 1
+}]]]></db:input-parameters>
+		</db:insert>
+		<json-logger:logger doc:name="Logger" doc:id="a5c7169c-32a0-43f7-96e2-510e5e7b3484" config-ref="JSON_Logger_Config" message="payload at the end of the flow"/>
+	</flow>
+	<flow name="user-retrieve-flow-by-id" doc:id="d3ff5868-a9a4-4bfe-8251-bd1bac2baf86" >
+		<json-logger:logger doc:name="Logger" doc:id="c34246a9-d908-4f61-a328-a67c54f739a0" config-ref="JSON_Logger_Config" message="Payload in the beginning of the flow"/>
+		<db:select doc:name="user-retrieve-by-id" doc:id="7a7aba8e-8fb4-4ab5-8af3-4d782a263186" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM USER WHERE USER_ID = :id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[id: attributes.uriParams.userID]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="9fbafc4b-eea4-431b-822b-2fd8bd536c82" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+	payload map(object) ->
+	{
+		firstname: object.FIRST_NAME,
+		lastname: object.LAST_NAME,
+		phone: object.PHONE_NUMBER,
+		email: object.EMAIL_ID
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="Logger" doc:id="10033a4a-4a49-4ac7-8e21-11933e18b636" config-ref="JSON_Logger_Config" message="payload at the end of the flow"/>
+	</flow>
+	<flow name="user-retrieve-flow-by-username" doc:id="9461e87f-a1e8-4ba0-b2cb-13b968e73fe8" >
+		<json-logger:logger doc:name="Logger" doc:id="7fa8f55d-566b-4adb-a4af-5dfbe65ac773" config-ref="JSON_Logger_Config" message="payload at the start of the flow"/>
+		<db:select doc:name="user-retrieve-by-name" doc:id="23dd21ce-5267-4c2d-9417-3b615a9b2d21" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT USER_ID FROM USER WHERE EMAIL_ID = :username]]></db:sql>
+			<db:input-parameters ><![CDATA[#[username: attributes.queryParams.username]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="8777f339-f71b-484b-bf65-5cede3d95c4d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	userID: payload[0].USER_ID
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="Logger" doc:id="2e0ea758-bbe5-4db7-aade-cb6087860960" config-ref="JSON_Logger_Config" message="payload at the end of the flow"/>
+	</flow>
+	<flow name="subscription-insertion-flow" doc:id="782dc6e7-e200-4d89-b0fb-d2903b534c41" >
+		<json-logger:logger doc:name="Logger" doc:id="d3e6c921-c03f-4458-b02f-7b53869a91ff" config-ref="JSON_Logger_Config" message="begining"/>
+		<db:insert doc:name="sub-insertion" doc:id="219e317e-04c9-4805-b8b6-324f2d5b9424" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO SUBSCRIPTION(SUBSCRIPTION_ID,USER_ID,SOURCE_LOCATION,DESTINATION_LOCATION,FROM_TIME,TO_TIME,STATUS_TYPE_ID) VALUES (:subscriptionID,:userID,:orgin,:destination,:fromTime,:toTime,1)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	subscriptionID:message.payload.subscriptionID,
+	userID: message.attributes.uriParams.userID,	
+	orgin: message.payload.sourceLocation,
+	destination: message.payload.destinationLocation,
+	fromTime: message.payload.fromTime, 
+	toTime: message.payload.toTime
+	
+	}]]]></db:input-parameters>
+		</db:insert>
+		<json-logger:logger doc:name="Logger" doc:id="783d32c9-a1f8-4455-9268-e74b9918e22c" config-ref="JSON_Logger_Config" message="End"/>
+	</flow>
+	<flow name="unsubscribe-flow" doc:id="12d04e3f-1f04-4e1f-8bdd-fe1dd04a6c42">
+		<json-logger:logger doc:name="Logger" doc:id="0e8c0295-32d1-44ec-8036-d995914687f8" config-ref="JSON_Logger_Config" message="Begining" />
+		<db:update doc:name="Update" doc:id="0b695481-a150-41e5-acfc-754b9dfe87be" config-ref="Database_Config">
+			<db:sql><![CDATA[UPDATE SUBSCRIPTION SET STATUS_TYPE_ID = 2 WHERE SUBSCRIPTION_ID=:subid]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	subid:attributes.uriParams.subscriptionID
+	
+	}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="27fe249e-b395-430a-8e9d-baf01fedd9bc">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="Logger" doc:id="0cd5a18a-a8a0-4d19-b8e6-82ee0c5750df" config-ref="JSON_Logger_Config" message="End" />
+	</flow>
+	<flow name="user-sub-retrieve-flow" doc:id="daaac2bb-37a3-4586-8e1c-7b144c24cc9b" >
+		<json-logger:logger doc:name="Logger" doc:id="40015b42-cb49-4057-beb5-8250d557446a" config-ref="JSON_Logger_Config" message="Begining"/>
+		<db:select doc:name="Select" doc:id="70450e25-bdd5-4ff1-bbe0-ea813dcfb1d8" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM SUBSCRIPTION WHERE USER_ID = :id AND STATUS_TYPE_ID = 1]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+id: attributes.uriParams.userID
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="01458994-6c82-41aa-827f-54ca92bf4da1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (item) -> {
+	sourceLocation: item.SOURCE_LOCATION,
+	destinationLocation: item.DESTINATION_LOCATION,
+	fromTime: item.FROM_TIME,
+	toTime: item.TO_TIME }]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="Logger" doc:id="4871194c-bd05-4e7f-b6a5-ce22f9838feb" config-ref="JSON_Logger_Config" message="End"/>
+	</flow>
+	<flow name="user-sub-retrieve-flow-by-subid" doc:id="0842739a-533f-4fd4-ab2d-1892598021ce" >
+		<json-logger:logger doc:name="Logger" doc:id="01ff4853-d5e0-406d-8920-9dd8bf7074cf" config-ref="JSON_Logger_Config" message="Begining"/>
+		<db:select doc:name="Select" doc:id="c270ac26-364e-49b9-bde3-913101f5de30" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM SUBSCRIPTION WHERE USER_ID = :id AND SUBSCRIPTION_ID = :sid AND STATUS_TYPE_ID = 1]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+id: attributes.uriParams.userID,
+sid: attributes.uriParams.subscriptionID
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="45564d52-6f66-42d6-b8e2-1e2f0a2e3493" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="Logger" doc:id="4f16b099-1f58-47a8-9c0a-158cb7a5fa38" config-ref="JSON_Logger_Config" message="End"/>
+	</flow>
+</mule>

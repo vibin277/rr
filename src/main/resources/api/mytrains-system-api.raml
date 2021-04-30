@@ -1,0 +1,185 @@
+#%RAML 1.0
+title: mytrains-system-api
+uses:
+  DatatypeLibrary:  /Library/DatatypeLibrary.raml
+types:
+  userData: DatatypeLibrary.user
+  subscriptionData: DatatypeLibrary.subscription
+  alertData: DatatypeLibrary.alert
+
+
+/user:
+  
+  post:
+    body:
+      application/json:
+        type: userData
+        example: !include /Examples/user-example.raml
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              message: "User Created Successfully"
+      500:
+        body:
+          application/json:
+            example:
+              message: "Server Error"
+  get:
+    queryParameters:
+      username:
+        type: string
+        example: "johncooperjcw@gmail.com"
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              output: !include /Examples/user-example.raml
+      500:
+        body:
+          application/json:
+            example:
+              message: "Server Error!"
+  put:
+    body:
+      application/json:
+        type: userData
+        example: !include /Examples/user-example.raml
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              message: "User data updated successfully"
+      500:
+        body:
+          application/json:
+            example:
+              message: "Server Error!"
+
+  /{userID}:
+    get:
+    
+      responses:
+        200:
+          body:
+            application/json:
+              type: userData
+              example: !include /Examples/user-example.raml
+        500:
+          body:
+            application/json:
+              example:
+                message: "Server Error!"
+
+    /subscription:
+      
+      post:
+        body:
+          application/json:
+            type: subscriptionData
+            examples: !include /Examples/singlesub-example.raml
+        responses:
+          201:
+            body:
+              application/json:
+                example:
+                  message: "Subscribed successfully"
+          500:
+            body:
+              application/json:
+                example:
+                  message: "Server Error!"
+      get:
+        responses:
+          200:
+            body:
+              application/json:
+                type: subscriptionData[]
+                examples: !include /Examples/multiple-sub-example.raml
+          500:
+            body:
+              application/json:
+                example:
+                  message: "Server Error"
+      /{subscriptionID}:
+        get:
+          responses:
+            200:
+              body:
+                application/json:
+                  example: !include /Examples/singlesub-example.raml
+            500:
+              body:
+                application/json:
+                  example:
+                    message: "Server Error!"
+        put:
+          
+          body:
+            application/json:
+              type: subscriptionData
+              example: !include /Examples/singlesub-example.raml
+          responses:
+            201:
+              body:
+                application/json:
+                  example:
+                    message: "Subscription Altered"
+            500:
+              body:
+                application/json:
+                  example:
+                    message: "Server Error!"
+        delete:
+          
+          responses:
+            200:
+              body:
+                application/json:
+                  example:
+                    message: "Unsubscribed Successfully"
+            500:
+              body:
+                application/json:
+                  example:
+                    message: "Server Error!"
+  /alert:
+    post:
+      is:
+    
+      body:
+        application/json:
+          type: alertData
+          example: !include /Examples/single-alert-example.raml
+      responses:
+        201:
+          body:
+            application/json:
+              example:
+                message: "Alert Recorded"
+        500:
+              body:
+                application/json:
+                  example:
+                    message: "Server Error!"
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: alertData[]
+              examples: !include /Examples/multiple-alert-example.raml
+        500:
+              body:
+                application/json:
+                  example:
+                    message: "Server Error!"
+                
+            
+                
+                    
+          
+      

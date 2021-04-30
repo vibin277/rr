@@ -1,0 +1,109 @@
+#%RAML 1.0 Library
+types:
+  user:
+    properties:
+      firstname:
+        example: "John"
+        type: string
+      lastname:
+        example: "Cooper"
+        type: string
+      email:
+        example: "jhoncooperjcw@gmail.com"
+        type: string
+      phone:
+        example: "+44 7911 123456"
+        type: string
+      userID:
+        example: "00g0MGHGPnYrcOaP17H"
+        type: string
+      createdTimestamp?:
+        example: 2021-03-11T08:24:23
+        type: datetime-only
+      updatedTimestamp?:
+        example: 2021-03-11T08:24:23
+        type: datetime-only
+  
+  subscription:
+    properties:
+      subscriptionID?:
+        example: 111
+        type: integer
+      userID:
+        example: "00g0MGHGPnYrcOaP17H"
+        type: string
+      sourceLocation:
+        example: "OXFORD"
+        type: string
+      destinationLocation:
+        example: "WESTMINSTER"
+        type: string
+      fromTime:
+        example: 09:28:31
+        type: time-only
+      toTime:
+        example: 09:28:31
+        type: time-only
+      alertTimePeriod?:
+        example: 00:30:00
+        type: time-only
+      createdTimestamp?:
+        example: 2021-03-11T09:17:26
+        type: datetime-only
+      updatedTimestamp?:
+        example: 2021-03-11T09:17:26
+        type: datetime-only
+
+  alert:
+    properties:
+      alertID?:
+        example: 221
+        type: integer
+      subscriptionID:
+        example: 111
+        type: integer
+      delayedMinute:
+        example: 00:30:10
+        type: time-only
+      delayType:
+        enum:
+          - DELAYED
+          - CANCELLED
+        example: "DELAYED"
+        type: string
+      DelayReason:
+        example: "This Train is Delayed due to speed regulations"
+        type: string
+      alertStatus:
+        example: "Success"
+        type: string
+      createdTimestamp?:
+        example: 2021-03-11T09:26:12
+        type: datetime-only
+
+  OktaUser:
+    properties:
+      firstname:
+        example: "John"
+        type: string
+      lastname:
+        example: "Cooper"
+        type: string
+      email:
+        example: "johncooper12@gmail.com"
+        type: string
+      phone:
+        example: "+44 790 141 561"
+        type: string
+      password?:
+        example: "johncooper@123"
+        type: string
+      
+  Authentication:
+    properties:
+      username:
+        example: "johncooper12@gmail.com"
+        type: string
+      password:
+        example: "johncooper@567"
+        type: string
